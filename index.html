@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cellular Respiration &amp; Fermentation: Where does this reaction happen?</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html, body { height:100%; }
+  body {
+    font-family:"Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+    background:#fff; color:#123a5c;
+  }
+  #app { display:flex; flex-direction:column; max-width:1000px; margin:0 auto; }
+
+  header {
+    background:linear-gradient(135deg,#123a5c,#1f6f7a);
+    color:#fff; display:flex; flex-direction:column; flex:0 0 auto;
+  }
+  .header-row { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 16px; }
+  header h1 { font-size:15px; font-weight:600; letter-spacing:.3px; }
+  #score { font-size:13px; font-weight:600; background:#123a5c; border:1px solid rgba(255,255,255,.35); padding:3px 10px; border-radius:20px; white-space:nowrap; }
+  #progress-wrap { height:4px; background:#e3eaf0; }
+  #progress { height:100%; width:0%; background:linear-gradient(90deg,#1f6f7a,#3fb0a8); transition:width .3s; }
+
+  main { display:flex; flex-direction:column; }
+  #activity { display:flex; flex-direction:column; gap:12px; padding:12px 16px; }
+  #figure {
+    flex:0 0 auto; display:flex; flex-direction:column; align-items:center;
+    background:#f5f8fa; border:1px solid #e3eaf0; border-radius:12px; padding:6px 10px 8px;
+  }
+  #rxn-scroll { width:100%; overflow-x:auto; display:flex; justify-content:center; }
+  #rxn-scroll:focus-visible { outline:3px solid #1f6f7a; outline-offset:2px; border-radius:6px; }
+  #rxn { width:100%; min-width:440px; max-width:600px; max-height:210px; height:auto; }
+  #legend { display:flex; flex-wrap:wrap; gap:14px; justify-content:center; margin-top:2px; font-size:12px; color:#5e7082; }
+  #legend span { display:inline-flex; align-items:center; gap:5px; }
+
+  #panel { display:flex; flex-direction:column; min-width:0; }
+  .qhead { display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:8px; }
+  #challenge {
+    display:none; background:#fff4dc; color:#7a4d00; border:1px solid #f0cf85;
+    border-radius:8px; padding:5px 10px; font-size:13px; font-weight:700; margin-bottom:8px; text-align:center;
+  }
+  #challenge.show { display:block; }
+  #qcount { font-size:12px; color:#5e7082; white-space:nowrap; }
+  #question { font-size:16px; font-weight:700; color:#123a5c; }
+  #question:focus { outline:none; }
+  .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+
+  .choices { display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; }
+  .choice {
+    display:flex; align-items:center; gap:8px; text-align:left;
+    background:#fff; color:#123a5c; border:1.5px solid #7b8f9e; border-radius:8px;
+    padding:7px 10px; font-size:13.5px; font-family:inherit; cursor:pointer; transition:background .15s, border-color .15s;
+  }
+  .choice .letter { font-weight:700; color:#1f6f7a; min-width:18px; }
+  .choice .mark { margin-left:auto; font-weight:700; }
+  .choice:hover:not([aria-disabled="true"]) { background:#eef5f7; border-color:#1f6f7a; }
+  .choice:focus-visible, button.action:focus-visible { outline:3px solid #1f6f7a; outline-offset:2px; }
+  .choice[aria-disabled="true"] { cursor:default; }
+  .choice.correct { background:#e8f7ef; border-color:#2e9e6b; color:#1d6b48; }
+  .choice.correct .letter { color:#1d6b48; }
+  .choice.wrong { background:#fbeaea; border-color:#d05a5a; color:#a53c3c; }
+  .choice.wrong .letter { color:#a53c3c; }
+
+  #feedback { font-size:13px; line-height:1.45; border-radius:8px; }
+  #feedback.show { padding:8px 10px; margin-top:8px; }
+  #feedback.good { background:#e8f7ef; color:#1d6b48; border-left:3px solid #2e9e6b; }
+  #feedback.bad { background:#fbeaea; color:#a53c3c; border-left:3px solid #d05a5a; }
+
+  #next-wrap { padding-top:8px; display:flex; justify-content:flex-end; }
+  button.action {
+    background:#1f6f7a; color:#fff; border:none; border-radius:8px;
+    padding:9px 20px; font-size:13px; font-weight:600; font-family:inherit; cursor:pointer; transition:background .15s;
+  }
+  button.action:hover:not(:disabled) { background:#155a63; }
+  button.action:disabled { background:#e3eaf0; color:#4f6172; cursor:default; }
+
+  #end { display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:28px 20px; }
+  #end h2 { font-size:22px; color:#123a5c; margin-bottom:6px; }
+  #end .big { font-size:44px; font-weight:800; color:#1f6f7a; margin:6px 0; }
+  #end p { font-size:14px; color:#5e7082; margin-bottom:12px; }
+  #endTime { font-weight:600; color:#123a5c !important; }
+
+  footer { flex:0 0 auto; text-align:center; font-size:9.5px; color:#667888; padding:4px; border-top:1px solid #eef2f5; }
+
+  @media (max-width:760px){
+    .choices { grid-template-columns:repeat(2, 1fr); }
+  }
+  @media (max-width:480px){
+    .choices { grid-template-columns:1fr; }
+  }
+  @media (prefers-reduced-motion:reduce){
+    #progress, .choice, button.action { transition:none; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header role="banner">
+    <div class="header-row">
+      <h1>Cellular Respiration &amp; Fermentation: Where does it happen?</h1>
+      <span id="score">Score: 0 / 0</span>
+    </div>
+    <div id="progress-wrap" aria-hidden="true"><div id="progress"></div></div>
+  </header>
+
+  <main id="main" aria-label="Metabolic pathway activity">
+    <div id="activity">
+      <div id="figure">
+        <div id="rxn-scroll">
+          <svg id="rxn" viewBox="0 0 600 200" role="img" aria-label=""></svg>
+        </div>
+        <div id="legend" aria-hidden="true">
+          <span><svg width="16" height="16"><circle cx="8" cy="8" r="6.5" fill="#1f6f7a" stroke="#123a5c" stroke-width="1.5"/></svg>carbon atom</span>
+          <span><svg width="18" height="18"><circle cx="9" cy="9" r="7.5" fill="#f2c26b" stroke="#9a6a14" stroke-width="1.5"/><text x="9" y="12.5" font-size="9" font-weight="700" text-anchor="middle" fill="#5a3c00">P</text></svg>phosphate group</span>
+          <span><svg width="34" height="18"><rect x="1" y="2" width="32" height="14" rx="5" fill="#e8eef4" stroke="#5e7082" stroke-width="1.5"/><text x="17" y="12.5" font-size="9" font-weight="700" text-anchor="middle" fill="#123a5c">CoA</text></svg>coenzyme A</span>
+        </div>
+      </div>
+
+      <div id="panel">
+        <div id="challenge" aria-hidden="true"><span aria-hidden="true">⚡</span> Ready for a challenge?</div>
+        <div class="qhead">
+          <h2 id="question" tabindex="-1">Where does this reaction take place?</h2>
+          <div id="qcount"></div>
+        </div>
+        <div class="choices" id="choices" role="group" aria-label="Answer choices"></div>
+        <div id="feedback" role="status" aria-live="polite"></div>
+        <div id="next-wrap">
+          <button class="action" id="nextBtn" disabled>Next</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="end" aria-hidden="true">
+      <h2 id="endTitle" tabindex="-1">Activity complete!</h2>
+      <div class="big" id="finalScore">0 / 10</div>
+      <p id="endTime"></p>
+      <p id="endMsg"></p>
+      <button class="action" id="restartBtn">Restart</button>
+    </div>
+  </main>
+
+  <div id="announce" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+  <footer role="contentinfo">Prompt engineered in Claude (Anthropic AI) by Gaston Jofre-Rodriguez.</footer>
+</div>
+
+<script>
+const OPTIONS = [
+  { id:'inv', letter:'a)', label:'Glycolysis (investment phase)' },
+  { id:'har', letter:'b)', label:'Glycolysis (harvest phase)' },
+  { id:'pox', letter:'c)', label:'Pyruvate Oxidation (Processing)' },
+  { id:'kre', letter:'d)', label:'Citric Acid Cycle (Krebs)' },
+  { id:'yst', letter:'e)', label:'Fermentation (yeasts)' },
+  { id:'mus', letter:'f)', label:'Fermentation (Muscle Fibers)' }
+];
+
+/* Molecule spec: c = carbons, pL/pR = phosphate on left/right end, coa = CoA attached, n = count (2 → "2 ×")
+   top: small molecules entering (in) or leaving (out) the reaction; bot: coupled carrier [from, to] */
+const POOL = [
+  // Glycolysis — investment
+  { id:'inv1', cat:'inv', L:[{c:6}], R:[{c:6,pR:1}], bot:['ATP','ADP'],
+    desc:'A 6-carbon molecule gains a phosphate group while ATP is converted to ADP.',
+    fb:'ATP is spent to attach a phosphate to a 6-carbon sugar. Spending ATP on a 6-carbon sugar is the signature of the investment phase.' },
+  { id:'inv2', cat:'inv', L:[{c:6,pR:1}], R:[{c:6,pL:1,pR:1}], bot:['ATP','ADP'],
+    desc:'A 6-carbon molecule with one phosphate gains a second phosphate while ATP is converted to ADP.',
+    fb:'A second ATP adds a second phosphate to the 6-carbon sugar. Glycolysis only spends ATP during the investment phase.' },
+  { id:'inv3', cat:'inv', challenge:true, L:[{c:6,pL:1,pR:1}], R:[{c:3,pR:1},{c:3,pL:1}],
+    desc:'A 6-carbon molecule with two phosphates splits into two 3-carbon molecules, each with one phosphate. No energy carrier is involved.',
+    fb:'The doubly phosphorylated 6-carbon sugar splits into two 3-carbon sugars, each carrying one phosphate. This split ends the investment phase: no ATP or NADH is made yet. The payoff comes in the harvest phase.' },
+
+  // Glycolysis — harvest
+  { id:'har1', cat:'har', L:[{c:3,pR:1}], R:[{c:3,pL:1,pR:1}], top:[{t:'Pᵢ',dir:'in'}], bot:['NAD⁺','NADH'],
+    desc:'A 3-carbon molecule with one phosphate picks up an inorganic phosphate and ends with two phosphates, while NAD+ is reduced to NADH.',
+    fb:'A 3-carbon sugar is oxidized (NAD⁺ → NADH) and picks up an inorganic phosphate. Three carbons, NADH made, and no CO₂ lost: the harvest phase of glycolysis.' },
+  { id:'har2', cat:'har', L:[{c:3,pL:1,pR:1}], R:[{c:3,pR:1}], bot:['ADP','ATP'],
+    desc:'A 3-carbon molecule with two phosphates loses one phosphate while ADP is converted to ATP.',
+    fb:'A phosphate is transferred from a 3-carbon molecule to ADP, making ATP by substrate-level phosphorylation. That happens in the harvest phase of glycolysis.' },
+  { id:'har3', cat:'har', L:[{c:3,pR:1}], R:[{c:3}], bot:['ADP','ATP'],
+    desc:'A 3-carbon molecule loses its last phosphate while ADP is converted to ATP.',
+    fb:'The last phosphate leaves the 3-carbon molecule to make ATP, producing pyruvate. This is the final step of the harvest phase of glycolysis.' },
+
+  // Pyruvate oxidation
+  { id:'pox1', cat:'pox', L:[{c:3}], R:[{c:2,coa:1}], top:[{t:'CoA',dir:'in'},{t:'CO₂',dir:'out'}], bot:['NAD⁺','NADH'],
+    desc:'A 3-carbon molecule releases CO2 and becomes a 2-carbon molecule attached to coenzyme A, while NAD+ is reduced to NADH.',
+    fb:'Pyruvate (3 C) loses one carbon as CO₂, NAD⁺ is reduced to NADH, and the remaining 2 carbons are attached to CoA as acetyl CoA. That is pyruvate oxidation.' },
+
+  // Citric acid cycle
+  { id:'kre1', cat:'kre', challenge:true, L:[{c:2,coa:1},{c:4}], R:[{c:6}], top:[{t:'CoA',dir:'out'}],
+    desc:'A 2-carbon molecule attached to coenzyme A combines with a 4-carbon molecule to form a 6-carbon molecule. Coenzyme A is released.',
+    fb:'Acetyl CoA (2 C) joins a 4-carbon molecule (oxaloacetate) to form a 6-carbon molecule (citrate), releasing CoA. This first step gives the citric acid cycle its name.' },
+  { id:'kre2', cat:'kre', L:[{c:6}], R:[{c:5}], top:[{t:'CO₂',dir:'out'}], bot:['NAD⁺','NADH'],
+    desc:'A 6-carbon molecule releases CO2 and becomes a 5-carbon molecule, while NAD+ is reduced to NADH.',
+    fb:'A 6-carbon molecule loses one carbon as CO₂ and NAD⁺ is reduced to NADH. A 6-carbon molecule losing CO₂ only happens in the citric acid cycle.' },
+  { id:'kre3', cat:'kre', L:[{c:5}], R:[{c:4,coa:1}], top:[{t:'CoA',dir:'in'},{t:'CO₂',dir:'out'}], bot:['NAD⁺','NADH'],
+    desc:'A 5-carbon molecule releases CO2 and becomes a 4-carbon molecule attached to coenzyme A, while NAD+ is reduced to NADH.',
+    fb:'5 C → 4 C, releasing CO₂ and making NADH: the second carbon lost in the citric acid cycle. Don’t let the CoA fool you; pyruvate oxidation starts with 3 carbons.' },
+  { id:'kre4', cat:'kre', L:[{c:4,coa:1}], R:[{c:4}], top:[{t:'CoA',dir:'out'}], bot:['ADP','ATP'],
+    desc:'A 4-carbon molecule releases coenzyme A while ADP is converted to ATP.',
+    fb:'Releasing CoA from a 4-carbon molecule powers ATP synthesis by substrate-level phosphorylation. Glycolysis also makes ATP this way, but from 3-carbon molecules. This one is in the citric acid cycle.' },
+  { id:'kre5', cat:'kre', L:[{c:4}], R:[{c:4}], bot:['FAD','FADH₂'],
+    desc:'A 4-carbon molecule is converted to another 4-carbon molecule while FAD is reduced to FADH2.',
+    fb:'FAD → FADH₂ is the giveaway. Of the pathways in this activity, only the citric acid cycle reduces FAD.' },
+  { id:'kre6', cat:'kre', L:[{c:4}], R:[{c:4}], bot:['NAD⁺','NADH'],
+    desc:'A 4-carbon molecule is converted to another 4-carbon molecule while NAD+ is reduced to NADH.',
+    fb:'A 4-carbon molecule is oxidized (NAD⁺ → NADH) to regenerate oxaloacetate, the 4-carbon molecule that restarts the cycle. That is the citric acid cycle.' },
+
+  // Fermentation — yeasts
+  { id:'yst1', cat:'yst', challenge:true, L:[{c:3}], R:[{c:2}], top:[{t:'CO₂',dir:'out'}],
+    desc:'A 3-carbon molecule releases CO2 and becomes a 2-carbon molecule. No electron carrier is involved and no coenzyme A is attached.',
+    fb:'Pyruvate loses CO₂, but no NADH is made and no CoA is attached. This is the first step of alcohol fermentation in yeasts. In pyruvate oxidation, the same carbon loss comes with NADH and acetyl CoA.' },
+  { id:'yst2', cat:'yst', challenge:true, L:[{c:2}], R:[{c:2}], bot:['NADH','NAD⁺'],
+    desc:'A 2-carbon molecule is converted to another 2-carbon molecule while NADH is oxidized to NAD+.',
+    fb:'A 2-carbon molecule (acetaldehyde) accepts electrons from NADH and becomes ethanol, regenerating NAD⁺ so glycolysis can continue. That is alcohol fermentation in yeasts.' },
+  { id:'yst3', cat:'yst', L:[{c:3}], R:[{c:2}], top:[{t:'CO₂',dir:'out'}], bot:['NADH','NAD⁺'],
+    desc:'A 3-carbon molecule releases CO2 and becomes a 2-carbon molecule, while NADH is oxidized to NAD+.',
+    fb:'3 C → 2 C with CO₂ released, and NADH is oxidized back to NAD⁺: pyruvate becomes ethanol. That is alcohol fermentation in yeasts. Compare pyruvate oxidation, where NAD⁺ is reduced to NADH instead.' },
+
+  // Fermentation — muscle fibers
+  { id:'mus1', cat:'mus', L:[{c:3}], R:[{c:3}], bot:['NADH','NAD⁺'],
+    desc:'A 3-carbon molecule is converted to another 3-carbon molecule while NADH is oxidized to NAD+.',
+    fb:'Pyruvate (3 C) accepts electrons from NADH and becomes lactate (3 C). No carbon is lost. Regenerating NAD⁺ without releasing CO₂ is lactic acid fermentation, as in muscle fibers.' }
+];
+
+/* ---------- SVG drawing ---------- */
+const NS = 'http://www.w3.org/2000/svg';
+const C_R = 11, C_STEP = 26;
+function el(tag, attrs, text){
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+function molWidth(m){
+  let w = m.c * C_STEP;
+  if (m.pL) w += 24;
+  if (m.pR) w += 24;
+  if (m.coa) w += 46;
+  if (m.n > 1) w += 30;
+  return w;
+}
+function drawMol(svg, m, cx, cy){
+  let x = cx - molWidth(m) / 2;
+  const g = el('g', {});
+  if (m.n > 1){
+    g.appendChild(el('text', { x:x+12, y:cy+5, 'font-size':15, 'font-weight':700, 'text-anchor':'middle', fill:'#123a5c' }, m.n + '×'));
+    x += 30;
+  }
+  const firstC = x + (m.pL ? 24 : 0) + C_STEP/2;
+  const lastC = firstC + (m.c - 1) * C_STEP;
+  let lineStart = firstC, lineEnd = lastC;
+  if (m.pL) lineStart = x + 10;
+  if (m.pR) lineEnd = lastC + 24;
+  if (m.coa) lineEnd = lastC + C_STEP/2 + 8;
+  g.appendChild(el('line', { x1:lineStart, y1:cy, x2:lineEnd, y2:cy, stroke:'#123a5c', 'stroke-width':2.5 }));
+  if (m.pL){
+    drawP(g, x + 10, cy);
+    x += 24;
+  }
+  for (let i = 0; i < m.c; i++){
+    g.appendChild(el('circle', { cx:x + C_STEP/2 + i*C_STEP, cy, r:C_R, fill:'#1f6f7a', stroke:'#123a5c', 'stroke-width':2 }));
+  }
+  x += m.c * C_STEP;
+  if (m.pR) drawP(g, x + 11, cy);
+  if (m.coa){
+    g.appendChild(el('rect', { x:x + 6, y:cy - 10, width:38, height:20, rx:6, fill:'#e8eef4', stroke:'#5e7082', 'stroke-width':1.8 }));
+    g.appendChild(el('text', { x:x + 25, y:cy + 4.5, 'font-size':12, 'font-weight':700, 'text-anchor':'middle', fill:'#123a5c' }, 'CoA'));
+  }
+  svg.appendChild(g);
+}
+function drawP(g, cx, cy){
+  g.appendChild(el('circle', { cx, cy, r:10, fill:'#f2c26b', stroke:'#9a6a14', 'stroke-width':1.8 }));
+  g.appendChild(el('text', { x:cx, y:cy + 4.5, 'font-size':12, 'font-weight':700, 'text-anchor':'middle', fill:'#5a3c00' }, 'P'));
+}
+function drawSide(svg, mols, cx, cy){
+  if (mols.length === 1){ drawMol(svg, mols[0], cx, cy); return; }
+  drawMol(svg, mols[0], cx, cy - 34);
+  svg.appendChild(el('text', { x:cx, y:cy + 6, 'font-size':18, 'font-weight':700, 'text-anchor':'middle', fill:'#123a5c' }, '+'));
+  drawMol(svg, mols[1], cx, cy + 34);
+}
+function drawReaction(q){
+  const svg = document.getElementById('rxn');
+  svg.innerHTML = '';
+  const defs = el('defs', {});
+  const mk = el('marker', { id:'ah', viewBox:'0 0 10 10', refX:8, refY:5, markerWidth:7, markerHeight:7, orient:'auto-start-reverse' });
+  mk.appendChild(el('path', { d:'M0,0 L10,5 L0,10 z', fill:'#123a5c' }));
+  defs.appendChild(mk);
+  svg.appendChild(defs);
+
+  const cy = 100;
+  drawSide(svg, q.L, 125, cy);
+  drawSide(svg, q.R, 478, cy);
+
+  // main arrow
+  svg.appendChild(el('line', { x1:250, y1:cy, x2:352, y2:cy, stroke:'#123a5c', 'stroke-width':3, 'marker-end':'url(#ah)' }));
+
+  // small molecules entering / leaving
+  (q.top || []).forEach(t => {
+    if (t.dir === 'in'){
+      svg.appendChild(el('path', { d:`M266 40 Q268 88 292 ${cy-3}`, fill:'none', stroke:'#123a5c', 'stroke-width':2, 'marker-end':'url(#ah)' }));
+      svg.appendChild(el('text', { x:262, y:30, 'font-size':15, 'font-weight':600, 'text-anchor':'middle', fill:'#123a5c' }, t.t));
+    } else {
+      svg.appendChild(el('path', { d:`M308 ${cy-3} Q332 88 336 40`, fill:'none', stroke:'#123a5c', 'stroke-width':2, 'marker-end':'url(#ah)' }));
+      svg.appendChild(el('text', { x:340, y:30, 'font-size':15, 'font-weight':600, 'text-anchor':'middle', fill:'#123a5c' }, t.t));
+    }
+  });
+
+  // coupled carrier (curved arrow under main arrow)
+  if (q.bot){
+    svg.appendChild(el('path', { d:'M266 156 Q301 46 336 156', fill:'none', stroke:'#1f6f7a', 'stroke-width':2, 'marker-end':'url(#ah)' }));
+    svg.appendChild(el('text', { x:262, y:176, 'font-size':15, 'font-weight':600, 'text-anchor':'middle', fill:'#123a5c' }, q.bot[0]));
+    svg.appendChild(el('text', { x:340, y:176, 'font-size':15, 'font-weight':600, 'text-anchor':'middle', fill:'#123a5c' }, q.bot[1]));
+  }
+  svg.setAttribute('aria-label', 'Reaction diagram: ' + q.desc);
+}
+
+/* ---------- Quiz logic ---------- */
+const TOTAL = 10;
+let qs = [], idx = 0, score = 0, answered = false, startTime = 0;
+const $ = id => document.getElementById(id);
+
+function shuffle(a){
+  for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+function buildSet(){
+  const regular = POOL.filter(p => !p.challenge);
+  const picked = [];
+  // guarantee every pathway appears at least once in Q1–9
+  OPTIONS.forEach(o => {
+    const opts = regular.filter(p => p.cat === o.id);
+    picked.push(opts[Math.floor(Math.random() * opts.length)]);
+  });
+  const rest = shuffle(regular.filter(p => !picked.includes(p)));
+  const main = shuffle(picked.concat(rest.slice(0, TOTAL - 1 - picked.length)));
+  const ch = POOL.filter(p => p.challenge);
+  main.push(ch[Math.floor(Math.random() * ch.length)]);
+  return main;
+}
+
+function announce(text){
+  const a = $('announce');
+  a.textContent = '';
+  setTimeout(() => { a.textContent = text; }, 60);
+}
+// make the diagram keyboard-scrollable only when it actually overflows (narrow screens / high zoom)
+function updateScrollFocus(){
+  const w = $('rxn-scroll');
+  if (w.scrollWidth > w.clientWidth + 1){ w.setAttribute('tabindex', '0'); w.setAttribute('role', 'region'); w.setAttribute('aria-label', 'Reaction diagram, scrollable'); }
+  else { w.removeAttribute('tabindex'); w.removeAttribute('role'); w.removeAttribute('aria-label'); }
+}
+window.addEventListener('resize', updateScrollFocus);
+
+function setHidden(node, hide){ node.setAttribute('aria-hidden', hide ? 'true' : 'false'); }
+
+function render(){
+  const q = qs[idx];
+  answered = false;
+  drawReaction(q);
+  $('qcount').textContent = `Question ${idx + 1} of ${TOTAL}`;
+  const isChallenge = idx === TOTAL - 1;
+  $('challenge').classList.toggle('show', isChallenge);
+  setHidden($('challenge'), !isChallenge);
+
+  const box = $('choices');
+  box.innerHTML = '';
+  OPTIONS.forEach(o => {
+    const b = document.createElement('button');
+    b.className = 'choice';
+    b.type = 'button';
+    b.dataset.id = o.id;
+    b.innerHTML = `<span class="letter">${o.letter}</span><span class="txt">${o.label}</span><span class="mark" aria-hidden="true"></span>`;
+    b.addEventListener('click', () => answer(o.id));
+    box.appendChild(b);
+  });
+
+  const fb = $('feedback');
+  fb.className = ''; fb.textContent = '';
+  updateScrollFocus();
+  $('nextBtn').disabled = true;
+  $('nextBtn').textContent = idx === TOTAL - 1 ? 'See results' : 'Next';
+}
+
+function answer(choice){
+  if (answered) return;
+  answered = true;
+  const q = qs[idx];
+  const right = choice === q.cat;
+  if (right) score++;
+
+  document.querySelectorAll('.choice').forEach(b => {
+    b.setAttribute('aria-disabled', 'true');
+    if (b.dataset.id === q.cat){ b.classList.add('correct'); b.querySelector('.mark').textContent = '✓'; }
+    else if (b.dataset.id === choice){ b.classList.add('wrong'); b.querySelector('.mark').textContent = '✗'; }
+  });
+
+  const correctLabel = OPTIONS.find(o => o.id === q.cat).label;
+  const fb = $('feedback');
+  fb.className = 'show ' + (right ? 'good' : 'bad');
+  fb.innerHTML = right
+    ? `<strong>Correct!</strong> ${q.fb}`
+    : `<strong>Not quite.</strong> This reaction belongs to <strong>${correctLabel}</strong>. ${q.fb}`;
+
+  $('score').textContent = `Score: ${score} / ${idx + 1}`;
+  $('progress').style.width = ((idx + 1) / TOTAL * 100) + '%';
+  $('nextBtn').disabled = false;
+  $('nextBtn').focus();
+}
+
+function formatTime(ms){
+  const s = Math.round(ms / 1000), m = Math.floor(s / 60), r = s % 60;
+  const parts = [];
+  if (m) parts.push(`${m} minute${m === 1 ? '' : 's'}`);
+  parts.push(`${r} second${r === 1 ? '' : 's'}`);
+  return parts.join(' ');
+}
+
+function showEnd(){
+  const elapsed = Date.now() - startTime;
+  $('activity').style.display = 'none';
+  setHidden($('activity'), true);
+  const end = $('end');
+  end.style.display = 'flex';
+  setHidden(end, false);
+  $('finalScore').textContent = `${score} / ${TOTAL}`;
+  $('endTime').textContent = `Time: ${formatTime(elapsed)}`;
+  let msg;
+  if (score === TOTAL) msg = 'Perfect score! Try again and beat your time?';
+  else if (score >= 8) msg = 'Nice work. Review the ones you missed. Try again for a better score in less time?';
+  else if (score >= 5) msg = 'Good start. Follow the carbons and the electron carriers, then try again.';
+  else msg = 'Keep practicing. Count the carbons on each side and check which carrier is gained or lost, then try again.';
+  $('endMsg').textContent = msg;
+  announce(`Activity complete. You scored ${score} out of ${TOTAL}. Time: ${formatTime(elapsed)}. ${msg}`);
+  $('endTitle').focus();
+}
+
+function start(){
+  qs = buildSet(); idx = 0; score = 0;
+  $('score').textContent = 'Score: 0 / 0';
+  $('progress').style.width = '0%';
+  $('end').style.display = 'none'; setHidden($('end'), true);
+  $('activity').style.display = 'flex'; setHidden($('activity'), false);
+  startTime = Date.now();
+  render();
+}
+
+$('nextBtn').addEventListener('click', () => {
+  if (!answered) return;
+  idx++;
+  if (idx >= TOTAL) { showEnd(); return; }
+  render();
+  const q = qs[idx];
+  announce(`Question ${idx + 1} of ${TOTAL}.${idx === TOTAL - 1 ? ' Challenge question.' : ''} Reaction: ${q.desc}`);
+  $('question').focus();
+});
+$('restartBtn').addEventListener('click', start);
+start();
+</script>
+</body>
+</html>
