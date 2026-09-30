@@ -209,12 +209,9 @@ const POOL = [
   { id:'yst1', cat:'yst', challenge:true, L:[{c:3}], R:[{c:2}], top:[{t:'CO₂',dir:'out'}],
     desc:'A 3-carbon molecule releases CO2 and becomes a 2-carbon molecule. No electron carrier is involved and no coenzyme A is attached.',
     fb:'Pyruvate loses CO₂, but no NADH is made and no CoA is attached. This is the first step of alcohol fermentation in yeasts. In pyruvate oxidation, the same carbon loss comes with NADH and acetyl CoA.' },
-  { id:'yst2', cat:'yst', challenge:true, L:[{c:2}], R:[{c:2}], bot:['NADH','NAD⁺'],
+  { id:'yst2', cat:'yst', L:[{c:2}], R:[{c:2}], bot:['NADH','NAD⁺'],
     desc:'A 2-carbon molecule is converted to another 2-carbon molecule while NADH is oxidized to NAD+.',
     fb:'A 2-carbon molecule (acetaldehyde) accepts electrons from NADH and becomes ethanol, regenerating NAD⁺ so glycolysis can continue. That is alcohol fermentation in yeasts.' },
-  { id:'yst3', cat:'yst', L:[{c:3}], R:[{c:2}], top:[{t:'CO₂',dir:'out'}], bot:['NADH','NAD⁺'],
-    desc:'A 3-carbon molecule releases CO2 and becomes a 2-carbon molecule, while NADH is oxidized to NAD+.',
-    fb:'3 C → 2 C with CO₂ released, and NADH is oxidized back to NAD⁺: pyruvate becomes ethanol. That is alcohol fermentation in yeasts. Compare pyruvate oxidation, where NAD⁺ is reduced to NADH instead.' },
 
   // Fermentation — muscle fibers
   { id:'mus1', cat:'mus', L:[{c:3}], R:[{c:3}], bot:['NADH','NAD⁺'],
